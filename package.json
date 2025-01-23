@@ -1,6 +1,6 @@
 {
   "name": "@inkandsteel/expo-config-plugin-jitsi",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Expo config plugin for React Native Jitsi Meet SDK",
   "main": "build/withJitsiSDK.js",
   "types": "build/withJitsiSDK.d.ts",
