@@ -4,7 +4,7 @@ import {
   withInfoPlist,
   withAppBuildGradle,
   AndroidConfig,
-  withPodfile
+  withPodfile,
 } from "@expo/config-plugins";
 
 const withJitsiSDK: ConfigPlugin = (config) => {
@@ -29,11 +29,24 @@ const withJitsiSDK: ConfigPlugin = (config) => {
 
   // 2. iOS Podfile Configuration
   config = withPodfile(config, (config) => {
-    config.modResults.contents = config.modResults.contents.replace(
-      /use_react_native/,
-      `use_react_native
-    pod 'JitsiMeetSDK', '~> 4.0.0'`
+    const podfileContent = config.modResults.contents;
+    const targetLines = podfileContent.split("\n");
+
+    // Find the use_react_native line
+    const useReactNativeIndex = targetLines.findIndex((line) =>
+      line.includes("use_react_native")
     );
+
+    if (useReactNativeIndex !== -1) {
+      // Insert the pod after use_react_native
+      targetLines.splice(
+        useReactNativeIndex + 1,
+        0,
+        "  pod 'JitsiMeetSDK', '~> 4.0.0'"
+      );
+    }
+
+    config.modResults.contents = targetLines.join("\n");
     return config;
   });
 
@@ -47,7 +60,7 @@ const withJitsiSDK: ConfigPlugin = (config) => {
       "android.permission.RECORD_AUDIO",
       "android.permission.INTERNET",
       "android.permission.MODIFY_AUDIO_SETTINGS",
-      "android.permission.WAKE_LOCK"
+      "android.permission.WAKE_LOCK",
     ];
 
     permissions.forEach((permission) => {
@@ -55,7 +68,8 @@ const withJitsiSDK: ConfigPlugin = (config) => {
     });
 
     // Add Jitsi Activity
-    const mainApplication = AndroidConfig.Manifest.getMainApplicationOrThrow(androidManifest);
+    const mainApplication =
+      AndroidConfig.Manifest.getMainApplicationOrThrow(androidManifest);
 
     mainApplication.activity = mainApplication.activity || [];
     mainApplication.activity.push({
@@ -65,8 +79,8 @@ const withJitsiSDK: ConfigPlugin = (config) => {
         "android:launchMode": "singleTask",
         "android:resizeableActivity": "true",
         "android:supportsPictureInPicture": "true",
-        "android:windowSoftInputMode": "adjustResize"
-      }
+        "android:windowSoftInputMode": "adjustResize",
+      },
     });
 
     return config;
@@ -74,8 +88,10 @@ const withJitsiSDK: ConfigPlugin = (config) => {
 
   // 4. iOS Info.plist Configuration
   config = withInfoPlist(config, (config) => {
-    config.modResults.NSCameraUsageDescription = "Camera access is required for video calls";
-    config.modResults.NSMicrophoneUsageDescription = "Microphone access is required for calls";
+    config.modResults.NSCameraUsageDescription =
+      "Camera access is required for video calls";
+    config.modResults.NSMicrophoneUsageDescription =
+      "Microphone access is required for calls";
 
     return config;
   });
