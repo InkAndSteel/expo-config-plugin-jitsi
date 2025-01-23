@@ -1,6 +1,7 @@
 {
-  "name": "@config-plugins/jitsi-react-native-sdk",
+  "name": "@inkandsteel/expo-config-plugin-jitsi",
   "version": "1.0.0",
+  "description": "Expo config plugin for React Native Jitsi Meet SDK",
   "main": "build/withJitsiSDK.js",
   "types": "build/withJitsiSDK.d.ts",
   "scripts": {
@@ -19,7 +20,16 @@
   "peerDependencies": {
     "expo": "^52"
   },
-  "upstreamPackage": "@jitsi/react-native-sdk",
-  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/InkAndSteel/expo-config-plugin-jitsi.git"
+  },
+  "keywords": [
+    "expo",
+    "config-plugins",
+    "jitsi",
+    "react-native"
+  ],
+  "author": "InkAndSteel",
   "license": "MIT"
 }
