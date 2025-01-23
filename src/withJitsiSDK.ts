@@ -4,11 +4,13 @@ import {
   withInfoPlist,
   withAppBuildGradle,
   AndroidConfig,
-  withPodfile,
+  withPodfileProperties,
 } from "@expo/config-plugins";
 
-const withJitsiSDK: ConfigPlugin = (config) => {
-  // 1. Android Gradle Configuration
+const withJitsiSDK: ConfigPlugin<
+  { iosDeploymentTarget?: string } | undefined
+> = (config, props) => {
+  // 1. Gradle Configuration
   config = withAppBuildGradle(config, (config) => {
     config.modResults.contents = config.modResults.contents.replace(
       /repositories {/,
@@ -18,81 +20,56 @@ const withJitsiSDK: ConfigPlugin = (config) => {
     return config;
   });
 
-  config = withAppBuildGradle(config, (config) => {
-    config.modResults.contents = config.modResults.contents.replace(
-      /dependencies {/,
-      `dependencies {
-        implementation ('org.jitsi.react:jitsi-meet-sdk:+') { transitive = true }`
-    );
-    return config;
-  });
-
-  // 2. iOS Podfile Configuration
-  config = withPodfile(config, (config) => {
-    const podfileContent = config.modResults.contents;
-    const targetLines = podfileContent.split("\n");
-
-    // Find the use_react_native line
-    const useReactNativeIndex = targetLines.findIndex((line) =>
-      line.includes("use_react_native")
-    );
-
-    if (useReactNativeIndex !== -1) {
-      // Insert the pod after use_react_native
-      targetLines.splice(
-        useReactNativeIndex + 1,
-        0,
-        "  pod 'JitsiMeetSDK', '~> 4.0.0'"
-      );
-    }
-
-    config.modResults.contents = targetLines.join("\n");
-    return config;
-  });
-
-  // 3. Android Manifest Configuration
+  // 2. Android Manifest Configuration
   config = withAndroidManifest(config, (config) => {
     const androidManifest = config.modResults;
 
-    // Add permissions
     const permissions = [
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.BLUETOOTH",
       "android.permission.CAMERA",
-      "android.permission.RECORD_AUDIO",
       "android.permission.INTERNET",
+      "android.permission.MANAGE_OWN_CALLS",
       "android.permission.MODIFY_AUDIO_SETTINGS",
+      "android.permission.RECORD_AUDIO",
       "android.permission.WAKE_LOCK",
+      "android.permission.ACCESS_WIFI_STATE",
+      "android.permission.FOREGROUND_SERVICE",
+      "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+      "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION",
     ];
 
     permissions.forEach((permission) => {
       AndroidConfig.Permissions.addPermission(androidManifest, permission);
     });
 
-    // Add Jitsi Activity
-    const mainApplication =
-      AndroidConfig.Manifest.getMainApplicationOrThrow(androidManifest);
+    return config;
+  });
 
-    mainApplication.activity = mainApplication.activity || [];
-    mainApplication.activity.push({
-      $: {
-        "android:name": "com.reactnativejitsimeet.JitsiMeetNavigatorActivity",
-        "android:exported": "true",
-        "android:launchMode": "singleTask",
-        "android:resizeableActivity": "true",
-        "android:supportsPictureInPicture": "true",
-        "android:windowSoftInputMode": "adjustResize",
-      },
-    });
+  // 3. iOS Version
+  const iosDeploymentTarget = props?.iosDeploymentTarget || "15.1";
 
+  config = withPodfileProperties(config, (config) => {
+    config.modResults = {
+      ...config.modResults,
+      "ios.deploymentTarget": iosDeploymentTarget,
+    };
     return config;
   });
 
   // 4. iOS Info.plist Configuration
   config = withInfoPlist(config, (config) => {
-    config.modResults.NSCameraUsageDescription =
-      "Camera access is required for video calls";
-    config.modResults.NSMicrophoneUsageDescription =
-      "Microphone access is required for calls";
-
+    config.modResults = {
+      ...config.modResults,
+      NSCameraUsageDescription: "Camera access is required for video calls",
+      NSMicrophoneUsageDescription: "Microphone access is required for calls",
+      UIViewControllerBasedStatusBarAppearance: false,
+      RTCScreenSharingExtension: `${config.modResults.CFBundleIdentifier}.broadcast`,
+      UIBackgroundModes: [
+        ...(config.modResults.UIBackgroundModes || []),
+        "voip",
+      ],
+    };
     return config;
   });
 

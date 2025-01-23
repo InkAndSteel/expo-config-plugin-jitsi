@@ -18,7 +18,7 @@
     "expo-module-scripts": "^4.0.3"
   },
   "peerDependencies": {
-    "expo": "^52"
+    "expo": "*"
   },
   "repository": {
     "type": "git",
