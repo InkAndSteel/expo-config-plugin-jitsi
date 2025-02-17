@@ -7,9 +7,7 @@ import {
   withPodfileProperties,
 } from "@expo/config-plugins";
 
-const withJitsiSDK: ConfigPlugin<
-  { iosDeploymentTarget?: string } | undefined
-> = (config, props) => {
+const withJitsiSDK: ConfigPlugin = (config) => {
   // 1. Gradle Configuration
   config = withAppBuildGradle(config, (config) => {
     config.modResults.contents = config.modResults.contents.replace(
@@ -43,17 +41,6 @@ const withJitsiSDK: ConfigPlugin<
       AndroidConfig.Permissions.addPermission(androidManifest, permission);
     });
 
-    return config;
-  });
-
-  // 3. iOS Version
-  const iosDeploymentTarget = props?.iosDeploymentTarget || "15.1";
-
-  config = withPodfileProperties(config, (config) => {
-    config.modResults = {
-      ...config.modResults,
-      "ios.deploymentTarget": iosDeploymentTarget,
-    };
     return config;
   });
 
